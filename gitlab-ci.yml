@@ -1,0 +1,28 @@
+include:
+  - local: "deploy/ci.yml"
+
+stages:
+  - pre
+  - build
+  - validate
+  - test
+
+show_variables:
+  stage: pre
+  script:
+    - printenv | sort
+
+.acceptance_test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  needs:
+    - job: module_test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master"
+      when: always
+      allow_failure: false
+    - when: never
+  before_script:
+    - dotnet publish -c Release -o app
+  script:
+    - ./tests/run.sh ./tests/cases ./app/Flames.dll
