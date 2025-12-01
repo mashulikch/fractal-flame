@@ -23,6 +23,7 @@ show_variables:
       allow_failure: false
     - when: never
   before_script:
+    - apt-get update && apt-get install -y xxd
     - dotnet publish -c Release -o app
   script:
     - ./tests/run.sh ./tests/cases ./app/Flames.dll
