@@ -2,16 +2,29 @@
 
 echo "Testing basic functionality..."
 
-# Аргументы для запуска программы
-DLL_PATH="$1"
-ARGS="-w 800 -h 600 -o test_output.png"
+# Проверка аргумента
+if [ -z "$1" ]; then
+    echo "Usage: $0 path/to/Flames.dll"
+    exit 1
+fi
 
-# Запуск программы
+DLL_PATH="$1"
+
+if [ ! -f "$DLL_PATH" ]; then
+    echo "✗ DLL file '$DLL_PATH' does not exist"
+    exit 1
+fi
+
+OUT_DIR="test_output"
+mkdir -p "$OUT_DIR"
+
+OUTPUT_IMAGE="$OUT_DIR/basic_test_output.png"
+ARGS=" -w 3840 -h 2160 -i 20000000 --seed 12.345 -f swirl:25,horseshoe:20,handk:25,spherical:25,exp:46,bubble:100 -ap 0.6,0.5,0,-0.25,0.55,0.55 -t 200 -g true --gamma 1.5  -s 10 -o $OUTPUT_IMAGE"
+
 echo "Running: dotnet $DLL_PATH $ARGS"
 dotnet "$DLL_PATH" $ARGS
-
-# Проверка кода возврата
 EXIT_CODE=$?
+
 if [ $EXIT_CODE -eq 0 ]; then
     echo "✓ Application exited successfully (exit code: $EXIT_CODE)"
 else
@@ -19,11 +32,10 @@ else
     exit 1
 fi
 
-# Проверка, был ли создан файл изображения
-if [ -f "test_output.png" ]; then
-    echo "✓ Image file 'test_output.png' was created"
+if [ -f "$OUTPUT_IMAGE" ]; then
+    echo "✓ Image file '$OUTPUT_IMAGE' was created"
 else
-    echo "✗ Image file 'test_output.png' was not created"
+    echo "✗ Image file '$OUTPUT_IMAGE' was not created"
     exit 1
 fi
 
