@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Threading;
 using System.Threading.Tasks;
 using Flames.Config;
 using Flames.Logging;
 using Flames.Variations;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Flames.Core;
 
@@ -75,7 +75,7 @@ public sealed class FlamesGenerator
     }
 
     // Точка входа: запускает генерацию и возвращает итоговый Bitmap
-    public Bitmap Generate()
+    public Image<Rgba32> Generate()
     {
         int width = _config.Size.Width;
         int height = _config.Size.Height;
@@ -216,7 +216,7 @@ public sealed class FlamesGenerator
         }
 
         // Создаём итоговый Bitmap, 24 бита RGB
-        var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+        var image = new Image<Rgba32>(width, height);
 
         bool gammaCorrection = _config.GammaCorrection;
         double gamma = _config.Gamma <= 0 ? 2.2 : _config.Gamma;
@@ -232,7 +232,7 @@ public sealed class FlamesGenerator
                 // Фильтрация очень редких попаданий(картинка была менее "шумной")
                 if (hits < 4)
                 {
-                    bitmap.SetPixel(x, y, Color.Black);
+                    image[x, y] = new Rgba32(0, 0, 0);
                     continue;
                 }
 
@@ -285,11 +285,11 @@ public sealed class FlamesGenerator
                     ib = 255;
                 }
 
-                bitmap.SetPixel(x, y, Color.FromArgb(ir, ig, ib));
+                image[x, y] = new Rgba32(ir, ig, ib);
             }
         }
 
-        return bitmap;
+        return image;
     }
 
     /// <summary>

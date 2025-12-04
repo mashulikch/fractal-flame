@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 using Flames.Logging;
 
 namespace Flames.Imaging;
 
 /// <summary>
-/// Класс для сохранения Bitmap в PNG-файл
+/// Сохранение итогового изображения в PNG.
+/// Теперь использует ImageSharp и работает на всех ОС.
 /// </summary>
 public static class ImageSaver
 {
-    public static void SavePng(Bitmap bitmap, string outputPath, ILogger logger)
+    public static void SavePng(Image<Rgba32> image, string outputPath, ILogger logger)
     {
         try
         {
@@ -21,7 +23,7 @@ public static class ImageSaver
                 Directory.CreateDirectory(directory);
             }
 
-            bitmap.Save(outputPath, ImageFormat.Png);
+            image.Save(outputPath, new PngEncoder());
             logger.Info($"Image saved to '{outputPath}'.");
         }
         catch (Exception ex)

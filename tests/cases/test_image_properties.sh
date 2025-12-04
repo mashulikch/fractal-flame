@@ -16,7 +16,7 @@ if [ ! -f "$DLL_PATH" ]; then
 fi
 
 OUTPUT_IMAGE="test_output.png"
-ARGS="--seed 12.345 -w 640 -h 480 -i 2000000 -f swirl:25,horseshoe:20,handk:25,spherical:25,exp:46,bubble:100 -ap 0.9,0.4,0,-0.35,0.85,0.4 -o $OUTPUT_IMAGE -t 200 --gamma 2 -s 5"
+ARGS="--seed 12.345 -w 3840 -h 2160 -i 2000000 -f swirl:25,horseshoe:20,handk:25,spherical:25,exp:46,bubble:100 -ap 0.9,0.4,0,-0.35,0.85,0.4 -o $OUTPUT_IMAGE -t 200 --gamma 2 -s 5"
 
 # Генерация тестового изображения, если оно не существует
 if [ ! -f "$OUTPUT_IMAGE" ]; then

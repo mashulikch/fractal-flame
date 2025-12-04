@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
 using Flames.Imaging;
 using Flames.Logging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace Flames.Tests.Imaging;
@@ -24,17 +25,15 @@ public class ImageSaverTests
         Directory.CreateDirectory(dir);
         string path = Path.Combine(dir, $"test_{Guid.NewGuid():N}.png");
 
-        using var bmp = new Bitmap(10, 10);
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.Clear(Color.Black);
-            g.FillRectangle(Brushes.White, 2, 2, 3, 3);
-        }
+        using var image = new Image<Rgba32>(10, 10);
+
+        image[2, 2] = new Rgba32(255, 255, 255);
+        image[3, 3] = new Rgba32(255, 0, 0);
 
         var logger = new NullLogger();
 
         // Act
-        ImageSaver.SavePng(bmp, path, logger);
+        ImageSaver.SavePng(image, path, logger);
 
         // Assert
         Assert.True(File.Exists(path));

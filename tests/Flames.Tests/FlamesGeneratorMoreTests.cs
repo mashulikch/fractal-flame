@@ -1,8 +1,10 @@
-﻿using System.Drawing;
+﻿using System;
 using Flames.Config;
 using Flames.Core;
 using Flames.Logging;
 using Flames.Variations;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace Flames.Tests.Core;
@@ -49,15 +51,16 @@ public class FlamesGeneratorMoreTests
         var generator = new FlamesGenerator(config, variations, logger);
 
         // Act
-        using Bitmap bmp = generator.Generate();
+        using Image<Rgba32> image = generator.Generate();
 
         // Assert
+
         int nonBlack = 0;
-        for (int y = 0; y < bmp.Height; y++)
+        for (int y = 0; y < image.Height; y++)
         {
-            for (int x = 0; x < bmp.Width; x++)
+            for (int x = 0; x < image.Width; x++)
             {
-                var c = bmp.GetPixel(x, y);
+                var c = image[x, y];
                 if (c.R != 0 || c.G != 0 || c.B != 0)
                 {
                     nonBlack++;
@@ -81,8 +84,9 @@ public class FlamesGeneratorMoreTests
         var generator = new FlamesGenerator(config, variations, logger);
 
         // Act & Assert
-        using Bitmap bmp = generator.Generate();
-        Assert.Equal(config.Size.Width, bmp.Width);
-        Assert.Equal(config.Size.Height, bmp.Height);
+        using Image<Rgba32> image = generator.Generate();
+
+        Assert.Equal(config.Size.Width, image.Width);
+        Assert.Equal(config.Size.Height, image.Height);
     }
 }

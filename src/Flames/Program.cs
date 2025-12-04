@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Linq;
 using Flames.Config;
 using Flames.Core;
 using Flames.Imaging;
 using Flames.Logging;
 using Flames.Variations;
+using SixLabors.ImageSharp;
 
 namespace Flames;
 
