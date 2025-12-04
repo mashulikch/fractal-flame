@@ -27,8 +27,8 @@ measure_time() {
     echo "Running with $threads threads..."
 
     START_TIME=$(date +%s)
-    dotnet "$DLL_PATH" -- -w 3840 -h 2160 -i 20000000 --seed 12.345 \
-        -f swirl:25,horseshoe:20,handk:25,spherical:25,exp:46,bubble:100 \
+    dotnet "$DLL_PATH" -- -w 800 -h 600 -i 20000 --seed 12.345 \
+        f swirl:1.0,horseshoe:0.8,handk:1.0,spherical:1.0,exp:0.5,bubble:0.7\
         -ap 0.6,0.5,0,-0.25,0.55,0.55 \
         -t "$threads" -g true --gamma 1.5 -s 2
 

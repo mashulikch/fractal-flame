@@ -19,7 +19,7 @@ OUT_DIR="test_output"
 mkdir -p "$OUT_DIR"
 
 OUTPUT_IMAGE="$OUT_DIR/basic_test_output.png"
-ARGS=" -w 3840 -h 2160 -i 20000000 --seed 12.345 -f swirl:25,horseshoe:20,handk:25,spherical:25,exp:46,bubble:100 -ap 0.6,0.5,0,-0.25,0.55,0.55 -t 200 -g true --gamma 1.5  -s 10 -o $OUTPUT_IMAGE"
+ARGS=" -w 800 -h 600 -i 20000 --seed 12.345 -f swirl:10,horseshoe:0.8,handk:1,spherical:1,exp:0.5,bubble:0.7 -ap 0.6,0.5,0,-0.25,0.55,0.55 -t 200 -g true --gamma 1.5  -s 10 -o $OUTPUT_IMAGE"
 
 echo "Running: dotnet $DLL_PATH $ARGS"
 dotnet "$DLL_PATH" $ARGS

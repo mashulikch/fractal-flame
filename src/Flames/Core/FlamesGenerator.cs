@@ -285,7 +285,11 @@ public sealed class FlamesGenerator
                     ib = 255;
                 }
 
-                image[x, y] = new Rgba32(ir, ig, ib);
+                byte irByte = (byte)ir;
+                byte igByte = (byte)ig;
+                byte ibByte = (byte)ib;
+
+                image[x, y] = new Rgba32(irByte, igByte, ibByte);
             }
         }
 

@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
 using Flames.Config;
 
 namespace Flames.Variations;
 
 /// <summary>
-/// Создаёт список VariationDefinition на основании конфигурации:
-/// маппит имя функции на конкретную реализацию и назначает ей цвет
+/// Фабрика вариаций: создаёт список VariationDefinition
+/// на основе конфигурации и назначает им цвета.
 /// </summary>
 public static class VariationFactory
 {
@@ -22,18 +21,20 @@ public static class VariationFactory
         {
             // Создаём конкретную вариацию по имени
             var variation = CreateVariationByName(f.Name);
-            var color = PickColorForIndex(index);
-            list.Add(new VariationDefinition(variation, f.Weight, color));
+            var (r, g, b) = PickColorForIndex(index);
+
+            list.Add(new VariationDefinition(variation,
+                f.Weight,
+                r,
+                g,
+                b));
+
             index++;
         }
 
         return list.ToArray();
     }
 
-    /// <summary>
-    /// Возвращает объект вариации по имени (с учётом алиасов).
-    /// Если имя неизвестно — бросает ConfigException
-    /// </summary>
     private static IVariation CreateVariationByName(string nameRaw)
     {
         string name = nameRaw.Trim().ToLowerInvariant();
@@ -50,15 +51,15 @@ public static class VariationFactory
         };
     }
 
-    private static Color PickColorForIndex(int index)
+    private static (double r, double g, double b) PickColorForIndex(int index)
     {
-        Color[] palette =
+        var palette = new (double r, double g, double b)[]
         {
-            Color.FromArgb(255, 100, 100, 240),
-            Color.FromArgb(255, 200, 200, 10),
-            Color.FromArgb(255,255, 10, 10),
-            Color.FromArgb(255, 200, 160, 240),
-            Color.FromArgb(255, 0, 100, 120)
+            (100.0/255.0, 100.0/255.0, 240.0/255.0),
+            (200.0/255.0, 200.0/255.0, 10.0/255.0),
+            (255.0/255.0, 10.0/255.0, 10.0/255.0),
+            (200.0/255.0, 160.0/255.0, 240.0/255.0),
+            (0.0/255.0,   100.0/255.0, 120.0/255.0),
         };
 
         return palette[index % palette.Length];

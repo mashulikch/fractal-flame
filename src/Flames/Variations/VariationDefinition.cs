@@ -1,12 +1,7 @@
-﻿using System.Drawing;
-
-namespace Flames.Variations;
+﻿namespace Flames.Variations;
 
 /// <summary>
-/// Описание одной вариации для генератора:
-/// - сама функция (IVariation)
-/// - вес (вероятность выбора)
-/// - базовый цвет, которым "подкрашиваются" точки этой функции
+/// Описание вариации: функция, её вес и базовый цвет (RGB в диапазоне 0..1).
 /// </summary>
 public sealed class VariationDefinition
 {
@@ -18,14 +13,18 @@ public sealed class VariationDefinition
     public double ColorG { get; }
     public double ColorB { get; }
 
-    public VariationDefinition(IVariation variation, double weight, Color color)
+    public VariationDefinition(
+        IVariation variation,
+        double weight,
+        double colorR,
+        double colorG,
+        double colorB)
     {
         Variation = variation;
         Weight = weight;
 
-        // Конвертация цвета из [0..255] в [0..1]
-        ColorR = color.R / 255.0;
-        ColorG = color.G / 255.0;
-        ColorB = color.B / 255.0;
+        ColorR = colorR;
+        ColorG = colorG;
+        ColorB = colorB;
     }
 }
