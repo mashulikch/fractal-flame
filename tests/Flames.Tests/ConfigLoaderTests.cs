@@ -66,7 +66,9 @@ public class ConfigLoaderTests
         {
             // Удаляем временный файл
             if (File.Exists(tempFile))
+            {
                 File.Delete(tempFile);
+            }
         }
     }
 
@@ -100,13 +102,15 @@ public class ConfigLoaderTests
             var config = ConfigLoader.Load(args, logger);
 
             // Assert: значения из CLI перекрывают JSON
-            Assert.Equal(640, config.Size.Width); 
-            Assert.Equal(8, config.Threads);      
+            Assert.Equal(640, config.Size.Width);
+            Assert.Equal(8, config.Threads);
         }
         finally
         {
             if (File.Exists(tempFile))
+            {
                 File.Delete(tempFile);
+            }
         }
     }
 }

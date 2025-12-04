@@ -26,7 +26,7 @@ public static class CliParser
             {
                 case "-w":
                 case "--width":
-                    config.Size.Width = ReadInt(args, ref i, "width"); 
+                    config.Size.Width = ReadInt(args, ref i, "width");
                     break;
 
                 case "-h":
@@ -55,38 +55,38 @@ public static class CliParser
 
                 case "-ap":
                 case "--affine-params":
-                {
-                    // Конфигурация аффинных преобразований:
-                    // формат: a,b,c,d,e,f/a,b,c,d,e,f/...
-                    string value = ReadString(args, ref i, "affine-params");
-                    config.AffineParams = ParseAffineParamsList(value, inv);
-                    break;
-                }
+                    {
+                        // Конфигурация аффинных преобразований:
+                        // формат: a,b,c,d,e,f/a,b,c,d,e,f/...
+                        string value = ReadString(args, ref i, "affine-params");
+                        config.AffineParams = ParseAffineParamsList(value, inv);
+                        break;
+                    }
 
                 case "-f":
                 case "--functions":
-                {
-                    string value = ReadString(args, ref i, "functions");
-                    config.Functions = ParseFunctions(value, inv);
-                    break;
-                }
+                    {
+                        string value = ReadString(args, ref i, "functions");
+                        config.Functions = ParseFunctions(value, inv);
+                        break;
+                    }
 
                 case "-g":
                 case "--gamma-correction":
-                {
-                    // Флаг гамма-коррекции. Можно просто указать -g (true) или -g true / -g false
-                    bool value = true;
-                    if (i + 1 < args.Length &&
-                        (string.Equals(args[i + 1], "true", StringComparison.OrdinalIgnoreCase) ||
-                         string.Equals(args[i + 1], "false", StringComparison.OrdinalIgnoreCase)))
                     {
-                        i++;
-                        value = bool.Parse(args[i]);
-                    }
+                        // Флаг гамма-коррекции. Можно просто указать -g (true) или -g true / -g false
+                        bool value = true;
+                        if (i + 1 < args.Length &&
+                            (string.Equals(args[i + 1], "true", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(args[i + 1], "false", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            i++;
+                            value = bool.Parse(args[i]);
+                        }
 
-                    config.GammaCorrection = value;
-                    break;
-                }
+                        config.GammaCorrection = value;
+                        break;
+                    }
 
                 case "--gamma":
                     config.Gamma = ReadDouble(args, ref i, "gamma");

@@ -56,7 +56,7 @@ public sealed class FlamesGenerator
         _cumulativeWeights = BuildCumulativeWeights(variations);
         _totalWeight = _cumulativeWeights[^1];
     }
-    
+
     //Создаёт массив аффинных преобразований из конфигурации
     private static AffineTransform[] BuildAffines(AppConfig config)
     {
@@ -155,7 +155,7 @@ public sealed class FlamesGenerator
             tasks[t] = Task.Run(() =>
             {
                 var rng = CreateRandom(_config.Seed, threadIndex);
-                
+
                 // Запуск рабочеего цикла для потока
                 RunWorker(
                     myIterations,
@@ -214,7 +214,7 @@ public sealed class FlamesGenerator
         {
             _logger.Warn("No points landed on image. Result will be empty.");
         }
-        
+
         // Создаём итоговый Bitmap, 24 бита RGB
         var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
 
@@ -258,14 +258,32 @@ public sealed class FlamesGenerator
                 int ig = (int)(g * 255.0);
                 int ib = (int)(b * 255.0);
 
-                if (ir < 0) ir = 0;
-                else if (ir > 255) ir = 255;
+                if (ir < 0)
+                {
+                    ir = 0;
+                }
+                else if (ir > 255)
+                {
+                    ir = 255;
+                }
 
-                if (ig < 0) ig = 0;
-                else if (ig > 255) ig = 255;
+                if (ig < 0)
+                {
+                    ig = 0;
+                }
+                else if (ig > 255)
+                {
+                    ig = 255;
+                }
 
-                if (ib < 0) ib = 0;
-                else if (ib > 255) ib = 255;
+                if (ib < 0)
+                {
+                    ib = 0;
+                }
+                else if (ib > 255)
+                {
+                    ib = 255;
+                }
 
                 bitmap.SetPixel(x, y, Color.FromArgb(ir, ig, ib));
             }
@@ -483,7 +501,7 @@ public sealed class FlamesGenerator
     /// <summary>
     /// Создаёт RNG для конкретного потока на основе общего seed и индекса
     /// </summary>
-   private static Random CreateRandom(double seedBase, int index)
+    private static Random CreateRandom(double seedBase, int index)
     {
         unchecked
         {

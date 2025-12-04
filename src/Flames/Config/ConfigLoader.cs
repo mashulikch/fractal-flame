@@ -26,7 +26,7 @@ public static class ConfigLoader
                 {
                     PropertyNameCaseInsensitive = true
                 };
-                
+
                 // Десериализация JSON в AppConfig
                 var jsonConfig = JsonSerializer.Deserialize<AppConfig>(json, options);
                 if (jsonConfig == null)

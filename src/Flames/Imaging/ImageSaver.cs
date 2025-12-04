@@ -20,7 +20,7 @@ public static class ImageSaver
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             bitmap.Save(outputPath, ImageFormat.Png);
             logger.Info($"Image saved to '{outputPath}'.");
         }
