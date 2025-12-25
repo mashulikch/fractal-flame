@@ -9,7 +9,7 @@ namespace Flames.Imaging;
 
 /// <summary>
 /// Сохранение итогового изображения в PNG.
-/// Теперь использует ImageSharp и работает на всех ОС.
+/// Теперь использую ImageSharp, и работает на всех ОС
 /// </summary>
 public static class ImageSaver
 {
@@ -26,9 +26,9 @@ public static class ImageSaver
             image.Save(outputPath, new PngEncoder());
             logger.Info($"Image saved to '{outputPath}'.");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
         {
-            throw new Exception($"Failed to save image '{outputPath}': {ex.Message}", ex);
+            throw new InvalidOperationException($"Failed to save image '{outputPath}': {ex.Message}", ex);
         }
     }
 }

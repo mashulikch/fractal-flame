@@ -46,6 +46,14 @@ public sealed class FlamesGenerator
     private readonly double[] _cumulativeWeights;
     private readonly double _totalWeight;
 
+    // Константы
+    private const double DefaultScaleFactor = 0.6;
+    private const int WarmupIterations = 20;
+    private const int MinHitsThreshold = 4;
+    private const double DefaultGamma = 2.2;
+    private const int MaxColorValue = 255;
+    private const int ProgressReportInterval = 1000;
+
     public FlamesGenerator(AppConfig config, VariationDefinition[] variations, ILogger logger)
     {
         _config = config;
@@ -57,7 +65,9 @@ public sealed class FlamesGenerator
         _totalWeight = _cumulativeWeights[^1];
     }
 
-    //Создаёт массив аффинных преобразований из конфигурации
+    /// <summary>
+    /// Создаёт массив аффинных преобразований из конфигурации
+    /// </summary>
     private static AffineTransform[] BuildAffines(AppConfig config)
     {
         if (config.AffineParams == null || config.AffineParams.Count == 0)
@@ -74,7 +84,9 @@ public sealed class FlamesGenerator
         return result;
     }
 
-    // Точка входа: запускает генерацию и возвращает итоговый Bitmap
+    /// <summary>
+    /// Точка входа: запускает генерацию и возвращает итоговый Bitmap
+    /// </summary>
     public Image<Rgba32> Generate()
     {
         int width = _config.Size.Width;
@@ -84,7 +96,7 @@ public sealed class FlamesGenerator
         // Центр и масштаб: перевод координат мира в координаты пикселей
         double centerX = width / 2.0;
         double centerY = height / 2.0;
-        double scale = Math.Min(width, height) * 0.6;
+        double scale = Math.Min(width, height) * DefaultScaleFactor;
 
         int threads = Math.Max(1, _config.Threads);
         int iterations = _config.IterationCount;
@@ -106,7 +118,7 @@ public sealed class FlamesGenerator
         object progressLock = new();
 
         // Число итераций между обновлениями прогресса
-        int progressChunk = Math.Max(1000, iterations / 100);
+        int progressChunk = Math.Max(ProgressReportInterval, iterations / 100);
 
         // Делегат для обновления прогресса из разных потоков
         Action<long> progressUpdate = delta =>
@@ -134,7 +146,7 @@ public sealed class FlamesGenerator
         };
 
         // Сколько итераций пропускаем в начале, чтобы "разогреть" траекторию
-        int warmupIterations = 20;
+        int warmupIterations = WarmupIterations;
         int symmetryLevel = Math.Max(1, _config.SymmetryLevel);
         double centerXLocal = centerX;
         double centerYLocal = centerY;
@@ -200,26 +212,16 @@ public sealed class FlamesGenerator
 
         _logger.Info("Iterations completed. Building bitmap...");
 
-        // Нахождение максимума попаданий по пикселям для логарифмической нормализации
-        int maxHits = 0;
-        for (int i = 0; i < pixelCount; i++)
-        {
-            if (hitCount[i] > maxHits)
-            {
-                maxHits = hitCount[i];
-            }
-        }
-
+        int maxHits = FindMaxHits(hitCount, pixelCount);
         if (maxHits == 0)
         {
             _logger.Warn("No points landed on image. Result will be empty.");
         }
 
-        // Создаём итоговый Bitmap, 24 бита RGB
         var image = new Image<Rgba32>(width, height);
 
         bool gammaCorrection = _config.GammaCorrection;
-        double gamma = _config.Gamma <= 0 ? 2.2 : _config.Gamma;
+        double gamma = _config.Gamma <= 0 ? DefaultGamma : _config.Gamma;
 
         // Проход по пикселям и вычисление итогового цвета
         for (int y = 0; y < height; y++)
@@ -230,66 +232,16 @@ public sealed class FlamesGenerator
                 int hits = hitCount[idx];
 
                 // Фильтрация очень редких попаданий(картинка была менее "шумной")
-                if (hits < 4)
+                if (hits < MinHitsThreshold)
                 {
                     image[x, y] = new Rgba32(0, 0, 0);
                     continue;
                 }
 
-                double density = Math.Log(hits + 1) / Math.Log(maxHits + 1.0);
-
-                double r = (red[idx] / hits) * density;
-                double g = (green[idx] / hits) * density;
-                double b = (blue[idx] / hits) * density;
-
-                r = Clamp01(r);
-                g = Clamp01(g);
-                b = Clamp01(b);
-
-                if (gammaCorrection)
-                {
-                    double invGamma = 1.0 / gamma;
-                    r = Math.Pow(r, invGamma);
-                    g = Math.Pow(g, invGamma);
-                    b = Math.Pow(b, invGamma);
-                }
-
-                int ir = (int)(r * 255.0);
-                int ig = (int)(g * 255.0);
-                int ib = (int)(b * 255.0);
-
-                if (ir < 0)
-                {
-                    ir = 0;
-                }
-                else if (ir > 255)
-                {
-                    ir = 255;
-                }
-
-                if (ig < 0)
-                {
-                    ig = 0;
-                }
-                else if (ig > 255)
-                {
-                    ig = 255;
-                }
-
-                if (ib < 0)
-                {
-                    ib = 0;
-                }
-                else if (ib > 255)
-                {
-                    ib = 255;
-                }
-
-                byte irByte = (byte)ir;
-                byte igByte = (byte)ig;
-                byte ibByte = (byte)ib;
-
-                image[x, y] = new Rgba32(irByte, igByte, ibByte);
+                var pixelColor = CalculatePixelColor(
+                    red[idx], green[idx], blue[idx],
+                    hits, maxHits, gammaCorrection, gamma);
+                image[x, y] = pixelColor;
             }
         }
 
@@ -297,9 +249,57 @@ public sealed class FlamesGenerator
     }
 
     /// <summary>
+    /// Нахождение максимума попаданий по пикселям для логарифмической нормализации
+    /// </summary>
+    private static int FindMaxHits(int[] hitCount, int pixelCount)
+    {
+        int maxHits = 0;
+        for (int i = 0; i < pixelCount; i++)
+        {
+            if (hitCount[i] > maxHits)
+            {
+                maxHits = hitCount[i];
+            }
+        }
+        return maxHits;
+    }
+
+    /// <summary>
+    /// Вычисляет итоговый цвет пикселя из накопленных цветовых данных
+    /// </summary>
+    private static Rgba32 CalculatePixelColor(
+        float redSum, float greenSum, float blueSum,
+        int hits, int maxHits, bool gammaCorrection, double gamma)
+    {
+        double density = Math.Log(hits + 1) / Math.Log(maxHits + 1.0);
+
+        double r = (redSum / hits) * density;
+        double g = (greenSum / hits) * density;
+        double b = (blueSum / hits) * density;
+
+        r = Clamp01(r);
+        g = Clamp01(g);
+        b = Clamp01(b);
+
+        if (gammaCorrection)
+        {
+            double invGamma = 1.0 / gamma;
+            r = Math.Pow(r, invGamma);
+            g = Math.Pow(g, invGamma);
+            b = Math.Pow(b, invGamma);
+        }
+
+        byte rByte = (byte)Math.Clamp((int)(r * MaxColorValue), 0, MaxColorValue);
+        byte gByte = (byte)Math.Clamp((int)(g * MaxColorValue), 0, MaxColorValue);
+        byte bByte = (byte)Math.Clamp((int)(b * MaxColorValue), 0, MaxColorValue);
+
+        return new Rgba32(rByte, gByte, bByte);
+    }
+
+    /// <summary>
     /// Основной рабочий цикл для одного потока:
     /// выполняет warmup, затем основное число итераций,
-    /// обновляя локальный буфер и прогресс.
+    /// обновляя локальный буфер и прогресс
     /// </summary>
     private void RunWorker(
         int iterations,
@@ -328,56 +328,12 @@ public sealed class FlamesGenerator
 
         for (int i = 0; i < warmupIterations; i++)
         {
-            int idxVar = PickVariationIndex(rng);
-            var v = _variations[idxVar];
-
-            var affine = _affines[rng.Next(_affines.Length)];
-            affine.Transform(x, y, out double ax, out double ay);
-            v.Variation.Transform(ax, ay, out double vx, out double vy);
-
-            x = vx;
-            y = vy;
-
-            if (!hasColor)
-            {
-                colorR = v.ColorR;
-                colorG = v.ColorG;
-                colorB = v.ColorB;
-                hasColor = true;
-            }
-            else
-            {
-                colorR = (colorR + v.ColorR) * 0.5;
-                colorG = (colorG + v.ColorG) * 0.5;
-                colorB = (colorB + v.ColorB) * 0.5;
-            }
+            PerformIteration(rng, ref x, ref y, ref colorR, ref colorG, ref colorB, ref hasColor);
         }
 
         for (int i = 0; i < iterations; i++)
         {
-            int idxVar = PickVariationIndex(rng);
-            var v = _variations[idxVar];
-
-            var affine = _affines[rng.Next(_affines.Length)];
-            affine.Transform(x, y, out double ax, out double ay);
-            v.Variation.Transform(ax, ay, out double vx, out double vy);
-
-            x = vx;
-            y = vy;
-
-            if (!hasColor)
-            {
-                colorR = v.ColorR;
-                colorG = v.ColorG;
-                colorB = v.ColorB;
-                hasColor = true;
-            }
-            else
-            {
-                colorR = (colorR + v.ColorR) * 0.5;
-                colorG = (colorG + v.ColorG) * 0.5;
-                colorB = (colorB + v.ColorB) * 0.5;
-            }
+            PerformIteration(rng, ref x, ref y, ref colorR, ref colorG, ref colorB, ref hasColor);
 
             // Рисуем точку (и её повороты при симметрии)
             PlotPoint(
@@ -412,8 +368,43 @@ public sealed class FlamesGenerator
     }
 
     /// <summary>
+    /// Выполняет одну итерацию: выбирает вариацию, применяет аффинное и вариационное преобразования,
+    /// обновляет цвет
+    /// </summary>
+    private void PerformIteration(
+        Random rng,
+        ref double x, ref double y,
+        ref double colorR, ref double colorG, ref double colorB,
+        ref bool hasColor)
+    {
+        int idxVar = PickVariationIndex(rng);
+        var v = _variations[idxVar];
+
+        var affine = _affines[rng.Next(_affines.Length)];
+        affine.Transform(x, y, out double ax, out double ay);
+        v.Variation.Transform(ax, ay, out double vx, out double vy);
+
+        x = vx;
+        y = vy;
+
+        if (!hasColor)
+        {
+            colorR = v.ColorR;
+            colorG = v.ColorG;
+            colorB = v.ColorB;
+            hasColor = true;
+        }
+        else
+        {
+            colorR = (colorR + v.ColorR) * 0.5;
+            colorG = (colorG + v.ColorG) * 0.5;
+            colorB = (colorB + v.ColorB) * 0.5;
+        }
+    }
+
+    /// <summary>
     /// Рисует одну логическую точку и её копии с поворотами (симметрия),
-    /// записывая данные в локальный буфер потока.
+    /// записывая данные в локальный буфер потока
     /// </summary>
     private void PlotPoint(
         double x,
@@ -466,7 +457,7 @@ public sealed class FlamesGenerator
 
     /// <summary>
     /// Выбирает индекс вариации в соответствии с её весом.
-    /// Использует массив накопленных сумм (_cumulativeWeights).
+    /// Использует массив накопленных сумм (_cumulativeWeights)
     /// </summary>
     private int PickVariationIndex(Random rng)
     {
